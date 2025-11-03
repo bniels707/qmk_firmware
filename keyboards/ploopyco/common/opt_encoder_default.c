@@ -101,19 +101,19 @@ int8_t opt_encoder_handler(uint16_t curA, uint16_t curB) {
         sB = HI;
 
 		/* At the beginning of this if block:
-		 *   hilof, lohif = n - 2 state
-		 *   state = n - 1 state
-		 *   sA, sB = n state
+		 *     hilof, lohif = n - 2 state
+		 *     state = n - 1 state
+		 *     sA, sB = n state
 		 *
 		 * At the end of this if block:
-		 *   state = n state
-		 *   hilof, lohif = n - 1 state
+		 *     state = n state
+		 *     hilof, lohif = n - 1 state
 		 *
 		 * 3 valid transitions are required to return a non-zero value:
-		 *   HILO -> HIHI -> LOHI = +1
-		 *   LOHI -> HIHI -> HILO = -1
-		 *   LOHI -> LOLO -> HILO = +1
-		 *   HILO -> LOLO -> LOHI = -1
+		 *     HILO -> HIHI -> LOHI = +1
+		 *     LOHI -> HIHI -> HILO = -1
+		 *     LOHI -> LOLO -> HILO = +1
+		 *     HILO -> LOLO -> LOHI = -1
 		 * */
     if (state == HIHI) {
         if (sA == LO && sB == HI) {
