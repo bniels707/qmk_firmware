@@ -80,8 +80,8 @@ void opt_encoder_init(void) {
 }
 
 int8_t opt_encoder_handler(uint16_t curA, uint16_t curB) {
-	  /* Continue updating encoder thresholds until the counter
-		 * overflows / sample array is full */
+    /* Continue updating encoder thresholds until the counter
+     * overflows / sample array is full */
     if (lowOverflowA == false || highOverflowA == false) calculateThresholdA(curA);
     if (lowOverflowB == false || highOverflowB == false) calculateThresholdB(curB);
 
@@ -100,37 +100,41 @@ int8_t opt_encoder_handler(uint16_t curA, uint16_t curB) {
     else
         sB = HI;
 
-		/* At the beginning of this if block:
-		 *     hilof, lohif = n - 2 state
-		 *     state = n - 1 state
-		 *     sA, sB = n state
-		 *
-		 * At the end of this if block:
-		 *     state = n state
-		 *     hilof, lohif = n - 1 state
-		 *
-		 * 3 valid transitions are required to return a non-zero value:
-		 *     HILO -> HIHI -> LOHI = +1
-		 *     LOHI -> HIHI -> HILO = -1
-		 *     LOHI -> LOLO -> HILO = +1
-		 *     HILO -> LOLO -> LOHI = -1
-		 * */
+    /* At the beginning of this if block:
+     *     hilof, lohif = n - 2 state
+     *     state = n - 1 state
+     *     sA, sB = n state
+     *
+     * At the end of this if block:
+     *     state = n state
+     *     hilof, lohif = n - 1 state
+     *
+     * 3 valid transitions are required to return a non-zero value:
+     *     HILO -> HIHI -> LOHI = +1
+     *     LOHI -> HIHI -> HILO = -1
+     *     LOHI -> LOLO -> HILO = +1
+     *     HILO -> LOLO -> LOHI = -1
+     * */
     if (state == HIHI) {
         if (sA == LO && sB == HI) {
             state = LOHI;
             if (hilof) {
-							  /* Encoder went HILO -> HIHI -> LOHI */
+                /* Encoder went HILO -> HIHI -> LOHI */
                 ret   = 1;
                 hilof = false;
             }
         } else if (sA == HI && sB == LO) {
             state = HILO;
             if (lohif) {
-							  /* Encoder went LOHI -> HIHI -> HILO */
+                /* Encoder went LOHI -> HIHI -> HILO */
                 ret   = -1;
                 lohif = false;
             }
+        } else if (sA == LO && sB == LO ) {
+            /* HIHI -> LOLO is invalid, recalibrate */
+            opt_encoder_init();
         }
+        /* HIHI -> HIHI, no motion */
     }
 
     else if (state == HILO) {
@@ -140,34 +144,42 @@ int8_t opt_encoder_handler(uint16_t curA, uint16_t curB) {
             hilof = true;
             lohif = false;
         } else if (sA == LO && sB == LO) {
-					  /* Set n - 1 state to HILO, n state to LOHI */
+            /* Set n - 1 state to HILO, n state to LOHI */
             state = LOLO;
             hilof = true;
             lohif = false;
+        } else if (sA == LO && sB == HI) {
+            /* HILO -> LOHI is invalid, recalibrate */
+            opt_encoder_init();
         }
+        /* HILO -> HILO, no motion */
     }
 
     else if (state == LOLO) {
         if (sA == HI && sB == LO) {
             state = HILO;
             if (lohif) {
-							  /* Encoder went LOHI -> LOLO -> HILO */
+                /* Encoder went LOHI -> LOLO -> HILO */
                 ret   = 1;
                 lohif = false;
             }
         } else if (sA == LO && sB == HI) {
             state = LOHI;
             if (hilof) {
-							  /* Encoder went HILO -> LOLO -> LOHI */
+                /* Encoder went HILO -> LOLO -> LOHI */
                 ret   = -1;
                 hilof = false;
             }
+        } else if (sA == HI && sB == HI) {
+            /* LOLO -> HIHI is invalid, recalibrate */
+            opt_encoder_init();
         }
+        /* LOLO -> LOLO, no motion */
     }
 
     else { // state must be LOHI
         if (sA == HI && sB == HI) {
-					  /* Set n - 1 state to LOHI, n state to HIHI */
+            /* Set n - 1 state to LOHI, n state to HIHI */
             state = HIHI;
             lohif = true;
             hilof = false;
@@ -176,7 +188,11 @@ int8_t opt_encoder_handler(uint16_t curA, uint16_t curB) {
             state = LOLO;
             lohif = true;
             hilof = false;
+        } else if (sA == HI && sB == LO) {
+            /* LOHI -> HILO is invalid, recalibrate */
+            opt_encoder_init();
         }
+        /* LOHI -> LOHI, no motion */
     }
 
     return ret;
